@@ -2,7 +2,7 @@ version: "3.8"
 
 services:
   master:
-    image: custom-spark-3.5:latest #docker.io/bitnami/spark:3.5
+    image: docker.io/bitnami/spark:3.5
     container_name: spark-master
     hostname: master
     environment:
@@ -22,7 +22,7 @@ services:
       - ./data:/opt/spark/data
 
   worker1:
-    image: custom-spark-3.5:latest #docker.io/bitnami/spark:3.5
+    image: docker.io/bitnami/spark:3.5
     container_name: spark-worker-1
     hostname: worker1
     environment:
@@ -43,7 +43,7 @@ services:
       - master
 
   worker2:
-    image: custom-spark-3.5:latest #docker.io/bitnami/spark:3.5
+    image: docker.io/bitnami/spark:3.5
     container_name: spark-worker-2
     hostname: worker2
     environment:
