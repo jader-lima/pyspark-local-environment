@@ -4,7 +4,6 @@ import time
 import argparse
 
 def generate_products(number, output_path):
-    """Gera arquivos CSV de produtos com informações de venda."""
     products = [
         {"id": "0", "name": "nintendo", "price": 50.0},
         {"id": "1", "name": "super-nintendo", "price": 200.0},

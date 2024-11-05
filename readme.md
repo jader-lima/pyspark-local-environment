@@ -25,7 +25,27 @@ docker exec -it spark-master spark-submit /opt/spark/scripts/olist/ingestion/cus
 python generate_product_data.py --output_path "/opt/spark/data/transient/product_sales/" --number 50
 
 
-docker exec -it spark-master python /opt/spark/scripts/data_generator.py --output_path "/opt/spark/data/transient/product_sales/" --number 50
+
+
+docker exec -it spark-master python /opt/spark/scripts/data_generator/data_generator.py --output_path "/opt/spark/data/transient/product_sales/" --number 50
+
+
+
+docker exec -it spark-master spark-submit /opt/spark/scripts/streaming/streaming_read_console.py \
+--transient_path "/opt/spark/data/transient/product_sales/" \
+--checkpoint_path "/opt/spark/data/checkpoint/streaming_read_console"
+
+
+
+docker exec -it spark-master bash /opt/spark/scripts/bash/delete_folder_files.sh "/opt/spark/data/transient/product_sales/*"
+
+
+docker exec -it spark-master bash /opt/spark/scripts/bash/delete_folder_files.sh "/opt/spark/data/checkpoint/streaming_read_console"
+
+
+
+docker exec -it spark-master bash /opt/spark/scripts/bash/create_folder.sh "/opt/spark/data/transient/product_sales/"
+
 
 
 

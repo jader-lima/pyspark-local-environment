@@ -6,6 +6,10 @@ import argparse
 def process_streaming_data(transient_path, checkpoint_path):
     """Processa dados de produtos em streaming com PySpark."""
     spark = SparkSession.builder.appName("StructuredStreamingExample").getOrCreate()
+    spark.sparkContext.setLogLevel("ERROR")
+#    ERROR
+#   WARN 
+#   INFO 
 
     schema = StructType([
         StructField("id", StringType(), True),
