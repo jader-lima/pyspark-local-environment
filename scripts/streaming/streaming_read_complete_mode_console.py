@@ -4,12 +4,9 @@ from pyspark.sql.functions import col, avg, sum
 import argparse
 
 def process_streaming_data(transient_path, checkpoint_path):
-    """Processa dados de produtos em streaming com PySpark."""
+    # creating spark session and setting log level to error , it coudl be warn,info and error
     spark = SparkSession.builder.appName("StructuredStreamingExample").getOrCreate()
     spark.sparkContext.setLogLevel("ERROR")
-#    ERROR
-#   WARN 
-#   INFO 
 
     schema = StructType([
         StructField("id", StringType(), True),
@@ -19,21 +16,21 @@ def process_streaming_data(transient_path, checkpoint_path):
         StructField("total_price", FloatType(), True),
         StructField("discount", FloatType(), True)
     ])
-
-    # Lê o fluxo de dados CSV
+    
+    # reading streaming data
     input_stream = spark.readStream.format("csv") \
         .option("header", "true") \
         .schema(schema) \
         .load(transient_path)
 
-    # Agregação de dados de exemplo
+    # creating a aggregation using product field as group by field 
     aggregated_stream = input_stream.groupBy("product") \
         .agg(
             sum("total_price").alias("total_sales"),
             avg("discount").alias("average_discount")
         )
 
-    # Escreve o fluxo de dados no console
+    # write data to the destination, in this case the data will be displayed only in the console
     query = aggregated_stream.writeStream \
         .format("console") \
         .outputMode("complete") \

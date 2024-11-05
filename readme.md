@@ -1,98 +1,122 @@
-# Building local environment 
-## 1 - creating  folders
+# PySpark Local Environment
 
-### 1.1 - create folder's data and scripts , if it exists, ignore it
+This repository provides a setup for a local environment to run PySpark scripts, including batch and streaming processing examples. The configuration uses Docker containers to replicate a distributed environment with Apache Spark.
+
+## Table of Contents
+1. [Setting Up the Local Environment](#1---setting-up-the-local-environment)
+   - [Creating directories](#11---creating-directories)
+   - [Changing directory permissions](#12---changing-directory-permissions)
+   - [Building the custom image](#13---building-the-custom-image)
+2. [Starting the PySpark Environment](#2---starting-the-pyspark-environment)
+   - [Optional interactive mode](#21---optional-interactive-mode)
+3. [Running PySpark Scripts in Batch Mode](#3---running-pyspark-scripts-in-batch-mode)
+4. [Running PySpark Scripts in Streaming Mode](#4---running-pyspark-scripts-in-streaming-mode)
+   - [Preparing data directories](#41---preparing-data-directories)
+   - [Cleaning data and checkpoint directories](#42---cleaning-data-and-checkpoint-directories)
+   - [Running the data generator](#47---running-the-data-generator)
+   - [Running scripts in streaming modes](#48---running-scripts-in-streaming-modes)
+5. [Example: Running in Update Mode](#5---example-running-in-update-mode)
+
+---
+
+## 1 - Setting Up the Local Environment
+
+### 1.1 - Creating directories
+Create the `data` and `scripts` directories. If they already exist, you can skip this step.
+```bash
 mkdir data
 mkdir scripts
+```
 
-### 1.2 - changing permissions of the folders
+### 1.2 - Changing directory permissions
+Change the permissions of the directories to allow full access.
+```bash
 chmod -R 777 data
 chmod -R 777 scripts
+```
 
-### 1.3 building custom image
+### 1.3 - Building the custom image
+Change the permissions of the directories to allow full access.
+
+```bash
 cd docker
 docker build -t custom-spark-3.5:latest .
+```
 
-## 2 starting pyspark environment
+## 2 - Starting the PySpark Environment
+Start the PySpark environment using docker-compose.
+
+```bash
 docker-compose up -d
+```
 
-### 2. 1 -  execute spark-master container in interative mode optinal
-Could be usefull to run bash command in pyspark master container
+### 2.1 - Optional interactive mode
+You can run bash commands interactively in the spark-master container.
 
-docker exec -it spark-master bash BASH_COMMAND OR SH SCRIPT
+```bash
+docker exec -it spark-master bash
+```
 
-## 3 - Running pyspark scripts with spark-submit - batch script
+## 3 - Running PySpark Scripts in Batch Mode
+Run PySpark batch scripts using spark-submit.
 
-### 3. 1 -  execute spark batch ingestions example
+```bash
 docker exec -it spark-master spark-submit /opt/spark/scripts/olist/ingestion/customer_ingestion.py
+```
 
+## 4 -  Running PySpark Scripts in Streaming Mode
+### 4.1 - Preparing data directories
+Create directories for storing transient data.
 
-## 4 -  Running pyspark scripts with spark-submit - streaming script 
-
-
-### 4.1 - creating product sales folder
+```bash
 docker exec -it spark-master bash /opt/spark/scripts/bash/create_folder.sh "/opt/spark/data/transient/product_sales/"
-
-### 4.2 - creating product sales folder
 docker exec -it spark-master bash /opt/spark/scripts/bash/create_folder.sh "/opt/spark/data/transient/product_sales_update/"
+```
 
-### 4.3 - cleaning transient folder - product sales - If script has been run previously, clean the transient folder
+### 4.2 - Cleaning data and checkpoint directories
+If the script has been run before, clean the data and checkpoint directories.
+
+```bash
 docker exec -it spark-master bash /opt/spark/scripts/bash/delete_folder_files.sh "/opt/spark/data/transient/product_sales/*"
-
-### 4.4 - cleaning transient folder - product sales update - If script has been run previously, clean the transient folder
 docker exec -it spark-master bash /opt/spark/scripts/bash/delete_folder_files.sh "/opt/spark/data/transient/product_sales_update/*"
-
-### 4.5 - cleaning checkpoint folder - If script has been run previously, clean the checkpoint folder
 docker exec -it spark-master bash /opt/spark/scripts/bash/delete_folder_files.sh "/opt/spark/data/checkpoint/streaming_read_console"
-
-### 4.6 - cleaning checkpoint folder - If script has been run previously, clean the checkpoint folder
 docker exec -it spark-master bash /opt/spark/scripts/bash/delete_folder_files.sh "/opt/spark/data/checkpoint/streaming_read_console_update"
 
+```
+### 4.3 - Running scripts in streaming modes
+**Append Mode**
+Open a new terminal and run the following command:
 
-### 4.7 - execute data generator file
-docker exec -it spark-master python /opt/spark/scripts/data_generator/data_generator.py --output_path "/opt/spark/data/transient/product_sales/" --number 50
-
-
-### 4.8 - execute spark streaming append mode console example
-
-Open a new terminal and run the above command
-
+```bash
 docker exec -it spark-master spark-submit /opt/spark/scripts/streaming/streaming_read_append_mode_console.py \
---transient_path "/opt/spark/data/transient/product_sales/" 
+--transient_path "/opt/spark/data/transient/product_sales/"
 
-### 4.9 - execute spark streaming complete mode console example
+```
+**Complete Mode**
+Open a new terminal and run the following command:
 
-Open a new terminal and run the above command
-
+```bash
 docker exec -it spark-master spark-submit /opt/spark/scripts/streaming/streaming_read_complete_mode_console.py \
 --transient_path "/opt/spark/data/transient/product_sales/" \
 --checkpoint_path "/opt/spark/data/checkpoint/streaming_read_console"
 
-### 5 execute spark streaming update mode console example
+```
+## 5 -  Example: Running in Update Mode
+### 5.1 - Running scripts in streaming modes
+**Update Mode**
 
-### 5.1 - execute spark streaming update mode console example
-
-Open a new terminal and run the above command
-
+```bash
 docker exec -it spark-master spark-submit /opt/spark/scripts/streaming/streaming_read_update_mode_console.py \
 --transient_path "/opt/spark/data/transient/product_sales_update/" \
 --checkpoint_path "/opt/spark/data/checkpoint/streaming_read_console_update"
+```
 
+### 5.2 - Copying files to transient directories
+Open a new terminal and run these commands one by one, waiting at least 10 seconds between each to observe the results:
 
-### 5.2 - open a new terminal windows and execute copy commands, waiting at least 10 seconds to execute next command
-
-Open a new terminal and run the above command
-
-docker exec -it spark-master cp /opt/spark/data/update_files/product_sales1.csv /opt/spark/data/transient/product_sales_update/product_sales1.csv 
-
-docker exec -it spark-master cp /opt/spark/data/update_files/product_sales2.csv /opt/spark/data/transient/product_sales_update/product_sales2.csv 
-
-docker exec -it spark-master cp /opt/spark/data/update_files/product_sales3.csv /opt/spark/data/transient/product_sales_update/product_sales3.csv 
-
-docker exec -it spark-master cp /opt/spark/data/update_files/product_sales4.csv /opt/spark/data/transient/product_sales_update/product_sales4.csv 
-
-
-
-
-
-
+```bash
+docker exec -it spark-master cp /opt/spark/data/update_files/product_sales1.csv /opt/spark/data/transient/product_sales_update/product_sales1.csv
+docker exec -it spark-master cp /opt/spark/data/update_files/product_sales2.csv /opt/spark/data/transient/product_sales_update/product_sales2.csv
+docker exec -it spark-master cp /opt/spark/data/update_files/product_sales3.csv /opt/spark/data/transient/product_sales_update/product_sales3.csv
+docker exec -it spark-master cp /opt/spark/data/update_files/product_sales4.csv /opt/spark/data/transient/product_sales_update/product_sales4.csv
+```
