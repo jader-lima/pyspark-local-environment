@@ -57,6 +57,10 @@ You can run bash commands interactively in the spark-master container.
 docker exec -it spark-master bash
 ```
 
+```bash
+docker exec -it spark-master spark-submit /opt/spark/scripts/test/create-dataframe.py
+```
+
 ## 3 - Running PySpark Scripts in Batch Mode
 Run PySpark batch scripts using spark-submit.
 
@@ -119,4 +123,154 @@ docker exec -it spark-master cp /opt/spark/data/update_files/product_sales1.csv 
 docker exec -it spark-master cp /opt/spark/data/update_files/product_sales2.csv /opt/spark/data/transient/product_sales_update/product_sales2.csv
 docker exec -it spark-master cp /opt/spark/data/update_files/product_sales3.csv /opt/spark/data/transient/product_sales_update/product_sales3.csv
 docker exec -it spark-master cp /opt/spark/data/update_files/product_sales4.csv /opt/spark/data/transient/product_sales_update/product_sales4.csv
+
 ```
+
+/opt/bitnami/kafka/bin
+
+### 5.2 - create kafka topic
+docker exec -it kafka bash
+
+/opt/bitnami/kafka/bin/kafka-topics.sh --bootstrap-server kafka:9092 \
+--create \
+--topic test-topic \
+--replication-factor 1 \
+--partitions 3
+
+
+/opt/bitnami/kafka/bin/kafka-topics.sh --bootstrap-server kafka:9092 --list
+
+
+
+/opt/bitnami/kafka/bin/kafka-topics.sh --bootstrap-server kafka:9092 --describe --topic test-topic
+
+
+
+
+### create messages
+/opt/bitnami/kafka/bin/kafka-console-producer.sh --bootstrap-server kafka:9092 \
+--topic test-topic
+
+### consume messages
+/opt/bitnami/kafka/bin/kafka-console-consumer.sh --bootstrap-server kafka:9092 \
+--topic test-topic \
+--from-beginning
+
+
+mkdir -p zookeeper/data zookeeper/datalog  kafka
+chmod -R 777 zookeeper kafka
+
+
+
+
+version: "3.8"
+
+services:
+  master:
+    image: custom-spark-3.5:latest #docker.io/bitnami/spark:3.5
+    container_name: spark-master
+    hostname: master
+    environment:
+      - SPARK_MODE=master
+      - SPARK_RPC_AUTHENTICATION_ENABLED=no
+      - SPARK_RPC_ENCRYPTION_ENABLED=no
+      - SPARK_LOCAL_STORAGE_ENCRYPTION_ENABLED=no
+      - SPARK_SSL_ENABLED=no
+      - SPARK_USER=spark
+      - SPARK_LOG_CONF=/opt/bitnami/spark/conf/log4j2.properties
+      - PYTHONPATH=/opt/bitnami/spark/jobs/app:/opt/bitnami/spark/jobs/app/
+    ports:
+      - "8080:8080"
+      - "7077:7077"
+    volumes:
+      - ./scripts:/opt/spark/scripts
+      - ./data:/opt/spark/data
+
+  worker1:
+    image: custom-spark-3.5:latest #docker.io/bitnami/spark:3.5
+    container_name: spark-worker-1
+    hostname: worker1
+    environment:
+      - SPARK_MODE=worker
+      - SPARK_MASTER_URL=spark://spark-master:7077
+      - SPARK_WORKER_MEMORY=1G
+      - SPARK_WORKER_CORES=2
+      - SPARK_RPC_AUTHENTICATION_ENABLED=no
+      - SPARK_RPC_ENCRYPTION_ENABLED=no
+      - SPARK_LOCAL_STORAGE_ENCRYPTION_ENABLED=no
+      - SPARK_SSL_ENABLED=no
+      - SPARK_USER=spark
+      - SPARK_LOG_CONF=/opt/bitnami/spark/conf/log4j2.properties
+    volumes:
+      - ./scripts:/opt/spark/scripts
+      - ./data:/opt/spark/data
+    depends_on:
+      - master
+
+  worker2:
+    image: custom-spark-3.5:latest #docker.io/bitnami/spark:3.5
+    container_name: spark-worker-2
+    hostname: worker2
+    environment:
+      - SPARK_MODE=worker
+      - SPARK_MASTER_URL=spark://spark-master:7077
+      - SPARK_WORKER_MEMORY=1G
+      - SPARK_WORKER_CORES=2
+      - SPARK_RPC_AUTHENTICATION_ENABLED=no
+      - SPARK_RPC_ENCRYPTION_ENABLED=no
+      - SPARK_LOCAL_STORAGE_ENCRYPTION_ENABLED=no
+      - SPARK_SSL_ENABLED=no
+      - SPARK_USER=spark
+      - SPARK_LOG_CONF=/opt/bitnami/spark/conf/log4j2.properties
+    volumes:
+      - ./scripts:/opt/spark/scripts
+      - ./data:/opt/spark/data
+    depends_on:
+      - master
+
+  zookeeper:
+    image: confluentinc/cp-zookeeper:latest
+    hostname: zookeeper
+    container_name: zookeeper
+    ports:
+      - "2181:2181"
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    volumes:
+      - ./zookeeper/data:/data
+      - ./zookeeper/datalog:/datalog
+
+  kafka:
+    image: confluentinc/cp-kafka:latest
+    hostname: kafka
+    container_name: kafka
+    ports:
+      - "9092:9092"
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092
+      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      restart: always
+    volumes:
+      - ./zookeeper/kafka/data:/var/lib/kafka/data
+    depends_on:
+      - zookeeper
+
+  jupyter:
+    image: jupyter/datascience-notebook:python-3.8.4
+    container_name: jupyter
+    ports:
+      - "8888:8888"
+    volumes:
+      - ./notebooks:/mnt/notebooks:rw
+      - ./data/:/mnt/data:rw
+      - ./py/:/mnt/py:rw
+    environment:
+      JUPYTER_ENABLE_LAB: "yes"
+    command: "start-notebook.sh --NotebookApp.token='' --NotebookApp.password=''"
+
+
+
