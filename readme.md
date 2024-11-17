@@ -145,6 +145,10 @@ docker exec -it kafka bash
 /opt/bitnami/kafka/bin/kafka-topics.sh --bootstrap-server kafka:9092 --describe --topic test-topic
 
 
+###
+python3 setup.py sdist bdist_wheel
+
+
 
 
 ### create messages
