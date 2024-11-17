@@ -1,70 +1,64 @@
+version: "3.8"
+
 services:
-  zookeeper:
-    image: bitnami/zookeeper:latest
-    hostname: zookeeper
-    container_name: zookeeper
-    ports:
-      - "2181:2181"
+  master:
+    image: docker.io/bitnami/spark:3.5
+    container_name: spark-master
+    hostname: master
     environment:
-      ZOOKEEPER_CLIENT_PORT: 2181
-      ZOOKEEPER_TICK_TIME: 2000
-      ALLOW_ANONYMOUS_LOGIN: yes
-    volumes: 
-      - ./zoo/data:/bitnami/zookeeper/data
-      - ./zoo/log:/bitnami/zookeeper/logs
-
-
-  kafka:
-    image: bitnami/kafka:latest
-    hostname: kafka
-    container_name: kafka
-    depends_on:
-      - zookeeper
+      - SPARK_MODE=master
+      - SPARK_RPC_AUTHENTICATION_ENABLED=no
+      - SPARK_RPC_ENCRYPTION_ENABLED=no
+      - SPARK_LOCAL_STORAGE_ENCRYPTION_ENABLED=no
+      - SPARK_SSL_ENABLED=no
+      - SPARK_USER=spark
+      - SPARK_LOG_CONF=/opt/bitnami/spark/conf/log4j2.properties
+      - PYTHONPATH=/opt/bitnami/spark/jobs/app:/opt/bitnami/spark/jobs/app/
     ports:
-      - "9092:9092"
-    environment:
-      KAFKA_CFG_BROKER_ID: 1
-      KAFKA_CFG_LISTENERS: PLAINTEXT://:9092
-      KAFKA_CFG_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
-      KAFKA_CFG_ZOOKEEPER_CONNECT: zookeeper:2181
-      KAFKA_CFG_NUM_PARTITIONS: 3
-      KAFKA_CFG_LOG_RETENTION_MS: 604800000  # Mantém logs por 7 dias
-      KAFKA_CFG_DELETE_TOPIC_ENABLE: true
-      ALLOW_PLAINTEXT_LISTENER: yes
-    volumes: 
-      - ./broker/data:/bitnami/kafka/data
-
-
-
-  kafka-ui:
-    image: provectuslabs/kafka-ui
-    container_name: kafka-ui
-    depends_on:
-      - kafka
-      - zookeeper
-    ports:
-      - "8889:8080"
-    restart: always
-    environment:
-      - KAFKA_CLUSTERS_0_NAME=kafka-ui
-      - KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS=kafka:9092
-      - KAFKA_CLUSTERS_0_ZOOKEEPER=zookeeper:2181
-
-
-
-  jupyter:
-    image: custom-datascience-notebook:python-3.8.4
-    container_name: custom-jupyter
-    ports:
-      - "8888:8888"
+      - "8080:8080"
+      - "7077:7077"
     volumes:
-      - ./notebooks:/home/jovyan/work/notebooks:rw
-      - ./data/:/home/jovyan/work/data:rw
-      - ./py/:/home/jovyan/work/py:rw
+      - ./scripts:/opt/spark/scripts
+      - ./data:/opt/spark/data
+
+  worker1:
+    image: docker.io/bitnami/spark:3.5
+    container_name: spark-worker-1
+    hostname: worker1
     environment:
-      JUPYTER_ENABLE_LAB: "yes"
-      ENV: "local"
-    command: "start-notebook.sh --NotebookApp.token='' --NotebookApp.password=''"
+      - SPARK_MODE=worker
+      - SPARK_MASTER_URL=spark://spark-master:7077
+      - SPARK_WORKER_MEMORY=1G
+      - SPARK_WORKER_CORES=2
+      - SPARK_RPC_AUTHENTICATION_ENABLED=no
+      - SPARK_RPC_ENCRYPTION_ENABLED=no
+      - SPARK_LOCAL_STORAGE_ENCRYPTION_ENABLED=no
+      - SPARK_SSL_ENABLED=no
+      - SPARK_USER=spark
+      - SPARK_LOG_CONF=/opt/bitnami/spark/conf/log4j2.properties
+    volumes:
+      - ./scripts:/opt/spark/scripts
+      - ./data:/opt/spark/data
+    depends_on:
+      - master
 
-
-
+  worker2:
+    image: docker.io/bitnami/spark:3.5
+    container_name: spark-worker-2
+    hostname: worker2
+    environment:
+      - SPARK_MODE=worker
+      - SPARK_MASTER_URL=spark://spark-master:7077
+      - SPARK_WORKER_MEMORY=1G
+      - SPARK_WORKER_CORES=2
+      - SPARK_RPC_AUTHENTICATION_ENABLED=no
+      - SPARK_RPC_ENCRYPTION_ENABLED=no
+      - SPARK_LOCAL_STORAGE_ENCRYPTION_ENABLED=no
+      - SPARK_SSL_ENABLED=no
+      - SPARK_USER=spark
+      - SPARK_LOG_CONF=/opt/bitnami/spark/conf/log4j2.properties
+    volumes:
+      - ./scripts:/opt/spark/scripts
+      - ./data:/opt/spark/data
+    depends_on:
+      - master
