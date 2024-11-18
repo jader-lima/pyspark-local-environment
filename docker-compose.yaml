@@ -62,3 +62,17 @@ services:
       - ./data:/opt/spark/data
     depends_on:
       - master
+
+  jupyter:
+    image: custom-datascience-notebook:python-3.8.4
+    container_name: custom-jupyter
+    ports:
+      - "8888:8888"
+    volumes:
+      - ./notebooks:/home/jovyan/work/notebooks:rw
+      - ./data/:/home/jovyan/work/data:rw
+      - ./py/:/home/jovyan/work/py:rw
+    environment:
+      JUPYTER_ENABLE_LAB: "yes"
+      ENV: "local"
+    command: "start-notebook.sh --NotebookApp.token='' --NotebookApp.password=''"
