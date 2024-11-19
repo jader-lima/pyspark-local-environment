@@ -14,17 +14,17 @@ setup(
             'confluent-kafka==2.3.0'
         ],
 
-    # Metadados
-    author="Seu Nome",
-    author_email="seuemail@example.com",
-    description="short lib descripton",
+    # Metadata
+    author="jaderlima",
+    author_email="you-email@example.com",
+    description="custom python library based on confluent-kafka library",
     long_description=open("README.md").read(),
     long_description_content_type="text/markdown",
-    url="https://github.com/seuusuario/my_library", 
+    url="https://https://github.com/jader-lima/pyspark-local-environment/tree/python-kafka-consumer-producer-classes-post1", 
     classifiers=[
         "Programming Language :: Python :: 3",
         "License :: OSI Approved :: MIT License",
         "Operating System :: OS Independent",
     ],
-    python_requires=">=3.8.4",  # Versão mínima do Python
+    python_requires=">=3.8.4",  # Python min version
 )

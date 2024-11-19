@@ -11,9 +11,3 @@ COPY lib_confluent_kafka_python-0.1.0-py3-none-any.whl /home/jovyan/work/lib_con
 RUN pip install /home/jovyan/work/lib_confluent_kafka_python-0.1.0-py3-none-any.whl && \
     rm /home/jovyan/work/lib_confluent_kafka_python-0.1.0-py3-none-any.whl
 
-# (Opcional) Copie outros arquivos do seu projeto para o contêiner
-# COPY . /home/jovyan/work
-
-# (Opcional) Defina comandos padrão, portas expostas, etc.
-# EXPOSE 8888
-# CMD ["start-notebook.sh"]
