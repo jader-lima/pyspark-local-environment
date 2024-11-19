@@ -24,15 +24,16 @@ This repository provides a setup for a local environment to run PySpark scripts,
 ### 1.1 - Creating directories
 Create the `data` and `scripts` directories. If they already exist, you can skip this step.
 ```bash
-mkdir data
-mkdir scripts
+sudo rm -R  ./zookeeper ./kafka
+sudo mkdir -p ./zookeeper/data ./zookeeper/log ./kafka/data
 ```
 
 ### 1.2 - Changing directory permissions
 Change the permissions of the directories to allow full access.
 ```bash
-chmod -R 777 data
-chmod -R 777 scripts
+
+sudo chmod -R 777 ./zookeeper ./kafka
+sudo chown -R 1001:1001 ./zookeeper ./kafka
 ```
 
 ### 1.3 - Building the custom image
@@ -161,120 +162,9 @@ python3 setup.py sdist bdist_wheel
 --from-beginning
 
 
-mkdir -p zookeeper/data zookeeper/datalog  kafka
-chmod -R 777 zookeeper kafka
 
 
 
-
-version: "3.8"
-
-services:
-  master:
-    image: custom-spark-3.5:latest #docker.io/bitnami/spark:3.5
-    container_name: spark-master
-    hostname: master
-    environment:
-      - SPARK_MODE=master
-      - SPARK_RPC_AUTHENTICATION_ENABLED=no
-      - SPARK_RPC_ENCRYPTION_ENABLED=no
-      - SPARK_LOCAL_STORAGE_ENCRYPTION_ENABLED=no
-      - SPARK_SSL_ENABLED=no
-      - SPARK_USER=spark
-      - SPARK_LOG_CONF=/opt/bitnami/spark/conf/log4j2.properties
-      - PYTHONPATH=/opt/bitnami/spark/jobs/app:/opt/bitnami/spark/jobs/app/
-    ports:
-      - "8080:8080"
-      - "7077:7077"
-    volumes:
-      - ./scripts:/opt/spark/scripts
-      - ./data:/opt/spark/data
-
-  worker1:
-    image: custom-spark-3.5:latest #docker.io/bitnami/spark:3.5
-    container_name: spark-worker-1
-    hostname: worker1
-    environment:
-      - SPARK_MODE=worker
-      - SPARK_MASTER_URL=spark://spark-master:7077
-      - SPARK_WORKER_MEMORY=1G
-      - SPARK_WORKER_CORES=2
-      - SPARK_RPC_AUTHENTICATION_ENABLED=no
-      - SPARK_RPC_ENCRYPTION_ENABLED=no
-      - SPARK_LOCAL_STORAGE_ENCRYPTION_ENABLED=no
-      - SPARK_SSL_ENABLED=no
-      - SPARK_USER=spark
-      - SPARK_LOG_CONF=/opt/bitnami/spark/conf/log4j2.properties
-    volumes:
-      - ./scripts:/opt/spark/scripts
-      - ./data:/opt/spark/data
-    depends_on:
-      - master
-
-  worker2:
-    image: custom-spark-3.5:latest #docker.io/bitnami/spark:3.5
-    container_name: spark-worker-2
-    hostname: worker2
-    environment:
-      - SPARK_MODE=worker
-      - SPARK_MASTER_URL=spark://spark-master:7077
-      - SPARK_WORKER_MEMORY=1G
-      - SPARK_WORKER_CORES=2
-      - SPARK_RPC_AUTHENTICATION_ENABLED=no
-      - SPARK_RPC_ENCRYPTION_ENABLED=no
-      - SPARK_LOCAL_STORAGE_ENCRYPTION_ENABLED=no
-      - SPARK_SSL_ENABLED=no
-      - SPARK_USER=spark
-      - SPARK_LOG_CONF=/opt/bitnami/spark/conf/log4j2.properties
-    volumes:
-      - ./scripts:/opt/spark/scripts
-      - ./data:/opt/spark/data
-    depends_on:
-      - master
-
-  zookeeper:
-    image: confluentinc/cp-zookeeper:latest
-    hostname: zookeeper
-    container_name: zookeeper
-    ports:
-      - "2181:2181"
-    environment:
-      ZOOKEEPER_CLIENT_PORT: 2181
-      ZOOKEEPER_TICK_TIME: 2000
-    volumes:
-      - ./zookeeper/data:/data
-      - ./zookeeper/datalog:/datalog
-
-  kafka:
-    image: confluentinc/cp-kafka:latest
-    hostname: kafka
-    container_name: kafka
-    ports:
-      - "9092:9092"
-    environment:
-      KAFKA_BROKER_ID: 1
-      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
-      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092
-      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092
-      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
-      restart: always
-    volumes:
-      - ./zookeeper/kafka/data:/var/lib/kafka/data
-    depends_on:
-      - zookeeper
-
-  jupyter:
-    image: jupyter/datascience-notebook:python-3.8.4
-    container_name: jupyter
-    ports:
-      - "8888:8888"
-    volumes:
-      - ./notebooks:/mnt/notebooks:rw
-      - ./data/:/mnt/data:rw
-      - ./py/:/mnt/py:rw
-    environment:
-      JUPYTER_ENABLE_LAB: "yes"
-    command: "start-notebook.sh --NotebookApp.token='' --NotebookApp.password=''"
 
 
 

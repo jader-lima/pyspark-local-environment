@@ -10,8 +10,8 @@ services:
       ZOOKEEPER_TICK_TIME: 2000
       ALLOW_ANONYMOUS_LOGIN: yes
     volumes: 
-      - ./zoo/data:/bitnami/zookeeper/data
-      - ./zoo/log:/bitnami/zookeeper/logs
+      - ./zookeeper/data:/bitnami/zookeeper/data
+      - ./zookeeper/log:/bitnami/zookeeper/logs
 
 
   kafka:
@@ -32,7 +32,7 @@ services:
       KAFKA_CFG_DELETE_TOPIC_ENABLE: true
       ALLOW_PLAINTEXT_LISTENER: yes
     volumes: 
-      - ./broker/data:/bitnami/kafka/data
+      - ./kafka/data:/bitnami/kafka/data
 
 
 
